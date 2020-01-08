@@ -57,6 +57,12 @@ reasonPistol = {
 	"plugged"
 }
 
+reasonMinigun = {
+	"ripped apart",
+	"torn apart",
+	"wiped out"
+}
+
 reasonMelee = {
 	"pummeled",
 	"broke",
@@ -78,7 +84,9 @@ reasonKnife = {
 	"striped",
 	"stuck it to",
 	"knifed",
-	"eviscerated"
+	"eviscerated",
+	"diced",
+	"filleted"
 }
 
 reasonExplosives = {
@@ -154,6 +162,64 @@ weaponsRifles = {
 	`weapon_compactrifle`
 }
 
+weaponsSnipers = {
+	`weapon_sniperrifle`,
+	`weapon_heavysniper`,
+	`weapon_heavysniper_mk2`,
+	`weapon_marksmanrifle`,
+	`weapon_marksmanrifle_mk2`
+}
+
+weaponsSMGs = {
+	`weapon_microsmg`,
+	`weapon_smg`,
+	`weapon_smg_mk2`,
+	`weapon_assaultsmg`,
+	`weapon_combatpdw`,
+	`weapon_machinepistol`,
+	`weapon_minismg`
+}
+
+weaponsLMGs = {
+	`weapon_mg`,
+	`weapon_combatmg`,
+	`weapon_combatmg_mk2`,
+	`weapon_gusenberg`
+}
+
+weaponsMelee = {
+	`weapon_bat`,
+	`weapon_crowbar`,
+	`weapon_flashlight`,
+	`weapon_golfclub`,
+	`weapon_hammer`,
+	`weapon_nightstick`,
+	`weapon_wrench`,
+	`weapon_poolcue`
+}
+
+weaponsKnives = {
+	`weapon_dagger`,
+	`weapon_bottle`,
+	`weapon_knife`,
+	`weapon_machete`,
+	`weapon_switchblade`,
+	`weapon_nightstick`,
+}
+
+weaponsExplosives = {
+	`weapon_grenade`,
+	`weapon_stickybomb`,
+	`weapon_proxmine`,
+	`weapon_pipebomb`
+}
+
+weaponsFire = {
+	`weapon_molotov`,
+	`weapon_flare`,
+	`weapon_flaregun`
+}
+
 RegisterNetEvent("deathmessages:notifyDeath")
 RegisterNetEvent("deathmessages:notifyMurder")
 AddEventHandler("deathmessages:notifyDeath", function(victimID)
@@ -204,6 +270,17 @@ AddEventHandler("deathmessages:notifyMurder", function(victimID, killerID, weapo
 	elseif TableHasValue(weaponsRifles, weapon) then
 		reasons = TableConcat(reasonRifle, reasonBullets)
 		reason = reasons[math.random(#reasons)]
+	-- Sniper rifle
+	elseif TableHasValue(weaponsSnipers, weapon) then
+		reasons = TableConcat(reasonSniper, reasonBullets)
+		reason = reasons[math.random(#reasons)]
+	-- Sub machine gun
+	elseif TableHasValue(weaponsSMGs, weapon) then
+		reasons = TableConcat(reasonSMG, reasonBullets)
+		reason = reasons[math.random(#reasons)]
+	-- Light machine gun
+	elseif TableHasValue(weaponsLMGs, weapon) then
+		reason = reasonBullets[math.random(#reasonBullets)]
 	-- Ran over by car
 	elseif killerInVehicle then
 		reason = reasonVehicle[math.random(#reasonVehicle)]
