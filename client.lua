@@ -46,6 +46,11 @@ reasonSMG = {
 	"SMGed"
 }
 
+reasonLMG = {
+	"machine gunned",
+	"sprayed"
+}
+
 reasonShotgun = {
 	"pulverised",
 	"shotgunned"
@@ -117,6 +122,11 @@ reasonVehicle = {
 	"accidented",
 	"splattered",
 	"ran over"
+}
+
+reasonHelicopter = {
+	"mowed down",
+	"chopped up"
 }
 
 weaponsPistols = {
@@ -234,7 +244,7 @@ AddEventHandler("deathmessages:notifyDeath", function(victimID)
 	notify(victimString .. " died.")
 end)
 
-AddEventHandler("deathmessages:notifyMurder", function(victimID, killerID, weapon, killerInVehicle)
+AddEventHandler("deathmessages:notifyMurder", function(victimID, killerID, weapon, killerInVehicle, killerType)
 	local victimString = printPlayerName(GetPlayerFromServerId(victimID))
 	local reason, isKillerNPC, isPlayerKiller, killerString
 
@@ -281,6 +291,9 @@ AddEventHandler("deathmessages:notifyMurder", function(victimID, killerID, weapo
 	-- Light machine gun
 	elseif TableHasValue(weaponsLMGs, weapon) then
 		reason = reasonBullets[math.random(#reasonBullets)]
+	-- Helicopter blades
+	elseif weapon == `vehicle_weapon_rotors` then
+		reason = reasonHelicopter[math.random(#reasonHelicopter)]
 	-- Ran over by car
 	elseif killerInVehicle then
 		reason = reasonVehicle[math.random(#reasonVehicle)]
@@ -290,7 +303,11 @@ AddEventHandler("deathmessages:notifyMurder", function(victimID, killerID, weapo
 
 	-- Create the kill message
 	if isKillerNPC then
-		notify(victimString .. " died.")
+		if not victimString == "you" and killerType == 6 or killerType == 27 then
+			notify(victimString .. " was killed by cops.")
+		else
+			notify(victimString .. " died.")
+		end
 	else
 		notify(killerString .. " " .. reason .. " " .. victimString .. ".")
 	end
@@ -306,7 +323,7 @@ AddEventHandler("baseevents:onPlayerKilled", function(killerID, deathData)
 	if deathData.killertype == 6 or deathData.killertype == 27  then
 	elseif deathData.killerinveh then
 	end
-	TriggerServerEvent("deathmessages:broadcastMurder", GetPlayerServerId(player), killerID, deathData.weaponhash, deathData.killerinveh)
+	TriggerServerEvent("deathmessages:broadcastMurder", GetPlayerServerId(player), killerID, deathData.weaponhash, deathData.killerinveh, deathData.killertype)
 end)
 
 -- If the player dies
