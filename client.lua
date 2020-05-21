@@ -1,4 +1,5 @@
 player = PlayerId()
+networkIndex = NetworkGetPlayerIndexFromPed(GetPlayerPed(-1))
 
 reasonBullets = {
 	"killed",
@@ -248,14 +249,14 @@ AddEventHandler("deathmessages:notifyDeath", function(victimName)
 	notify(victimString .. " died.")
 end)
 
-AddEventHandler("deathmessages:notifyMurder", function(victimName, killerName, string, killerInVehicle, killerType)
+AddEventHandler("deathmessages:notifyMurder", function(victimIndex, killerIndex, string, killerInVehicle, killerType)
 	--local victimString = printPlayerName(GetPlayerFromServerId(victimID))
 	local reason, isKillerNPC, isPlayerKiller, killerString
 
-	if victimName == GetPlayerName(player) then
+	if victimIndex == networkIndex then
 		victimString = "you"
 	else
-		victimString = printPlayerName(victimName)
+		victimString = printPlayerName(victimIndex)
 	end
 
 	-- Check if the killer is an NPC or a player
@@ -263,11 +264,11 @@ AddEventHandler("deathmessages:notifyMurder", function(victimName, killerName, s
 	--	isKillerNPC = true
 	--else
 		--isKillerNPC = false
-	killerString = printPlayerName(killerName)
+	killerString = printPlayerName(killerIndex)
 	--end
 
 	-- Check if you are the killer
-	if killerName == GetPlayerName(player) then
+	if killerIndex == networkIndex then
 		killerString = "you"
 	end
 
@@ -295,11 +296,12 @@ AddEventHandler("baseevents:onPlayerKilled", function(killerID, deathData)
 	local killerIndex = NetworkGetPlayerIndexFromPed(killerEntity)
 	local killerName = GetPlayerName(killerIndex)
 	local string = GenerateKillReason(deathData.weaponhash, deathData.killerinveh)
+	print(NetworkGetPlayerIndexFromPed(GetPlayerPed(-1)))
 	-- Killed by a cop
 	--if deathData.killertype == 6 or deathData.killertype == 27  then
 	--elseif deathData.killerinveh then
 	--end
-	TriggerServerEvent("deathmessages:broadcastMurder", GetPlayerName(player), killerName, string, deathData.killerinveh, deathData.killertype)
+	TriggerServerEvent("deathmessages:broadcastMurder", networkIndex, killerIndex, string, deathData.killerinveh, deathData.killertype)
 end)
 
 -- If the player dies
@@ -314,8 +316,8 @@ function notify(text)
     DrawNotification(true, true)
 end
 
-function printPlayerName(playerName)
-	local playerString = "<C>" .. playerName .. "</C>"
+function printPlayerName(index)
+	local playerString = "~HUD_COLOUR_NET_PLAYER" .. GetPlayerServerId(index) .. "~<C>" .. GetPlayerName(index) .. "</C>~HUD_COLOUR_PURE_WHITE~"
 	return playerString
 end
 
