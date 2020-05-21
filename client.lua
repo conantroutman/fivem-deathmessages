@@ -107,11 +107,15 @@ reasonExplosives = {
 }
 
 reasonFire = {
-	"flame grilled",
-	"roasted",
-	"butchered",
-	"charred",
+	"barbecued",
+	"blazed",
+	"burnt",
+	"cindered",
 	"cooked",
+	"flame grilled",
+	"ignited",
+	"roasted",
+	"charred",
 	"torched"
 }
 
@@ -232,40 +236,109 @@ weaponsFire = {
 
 RegisterNetEvent("deathmessages:notifyDeath")
 RegisterNetEvent("deathmessages:notifyMurder")
-AddEventHandler("deathmessages:notifyDeath", function(victimID)
+AddEventHandler("deathmessages:notifyDeath", function(victimName)
 	-- Check if you are the victim
 	local victimString
-	if GetPlayerFromServerId(victimID) == PlayerId() then
+	if victimName == GetPlayerName(player) then
 		victimString = "you"
 	else
-		victimString = printPlayerName(GetPlayerFromServerId(victimID))
+		victimString = printPlayerName(victimName)
 	end
 
 	notify(victimString .. " died.")
 end)
 
-AddEventHandler("deathmessages:notifyMurder", function(victimID, killerID, weapon, killerInVehicle, killerType)
-	local victimString = printPlayerName(GetPlayerFromServerId(victimID))
+AddEventHandler("deathmessages:notifyMurder", function(victimName, killerName, string, killerInVehicle, killerType)
+	--local victimString = printPlayerName(GetPlayerFromServerId(victimID))
 	local reason, isKillerNPC, isPlayerKiller, killerString
 
-	if GetPlayerFromServerId(victimID) == PlayerId() then
+	if victimName == GetPlayerName(player) then
 		victimString = "you"
 	else
-		victimString = printPlayerName(GetPlayerFromServerId(victimID))
+		victimString = printPlayerName(victimName)
 	end
 
 	-- Check if the killer is an NPC or a player
-	if killerID == -1 then
-		isKillerNPC = true
-	else
-		isKillerNPC = false
-		killerString = printPlayerName(GetPlayerFromServerId(killerID))
-	end
+	--if killerID == -1 then
+	--	isKillerNPC = true
+	--else
+		--isKillerNPC = false
+	killerString = printPlayerName(killerName)
+	--end
 
 	-- Check if you are the killer
-	if GetPlayerFromServerId(killerID) == PlayerId() then
+	if killerName == GetPlayerName(player) then
 		killerString = "you"
 	end
+
+	-- Create the kill message
+	--if isKillerNPC then
+	--	if not victimString == "you" and killerType == 6 or killerType == 27 then
+	--		notify(victimString .. " was killed by cops.")
+	--	elseif killerType == 28 then
+	--		notify(victimString .. " was mauled to death by an animal.")
+	--	else
+	--		notify(victimString .. " died.")
+	--	end
+	--else
+	notify(killerString .. " " .. string .. " " .. victimString .. ".")
+	--end
+end)
+
+-- If the player is killed
+
+--[[
+	killerID is the player ID of the killer. Returns -1 if killed by an NPC.
+]]
+AddEventHandler("baseevents:onPlayerKilled", function(killerID, deathData)
+	local killerEntity, weapon = NetworkGetEntityKillerOfPlayer(player)
+	local killerIndex = NetworkGetPlayerIndexFromPed(killerEntity)
+	local killerName = GetPlayerName(killerIndex)
+	local string = GenerateKillReason(deathData.weaponhash, deathData.killerinveh)
+	-- Killed by a cop
+	--if deathData.killertype == 6 or deathData.killertype == 27  then
+	--elseif deathData.killerinveh then
+	--end
+	TriggerServerEvent("deathmessages:broadcastMurder", GetPlayerName(player), killerName, string, deathData.killerinveh, deathData.killertype)
+end)
+
+-- If the player dies
+AddEventHandler("baseevents:onPlayerDied", function()
+	TriggerServerEvent("deathmessages:broadcastDeath", GetPlayerName(player))
+end)
+
+function notify(text)
+	SetNotificationTextEntry("STRING")
+	-- Automatically capitalize the first letter
+    AddTextComponentString(text:gsub("^%l", string.upper))
+    DrawNotification(true, true)
+end
+
+function printPlayerName(playerName)
+	local playerString = "<C>" .. playerName .. "</C>"
+	return playerString
+end
+
+-- Merge 2 tables
+function TableConcat(t1,t2)
+    for i=1,#t2 do
+        t1[#t1+1] = t2[i]
+    end
+    return t1
+end
+
+-- Check if a table contains a specific value
+function TableHasValue (table, value)
+    for i=1,#table do
+        if table[i] == value then
+            return true
+        end
+    end
+    return false
+end
+
+function GenerateKillReason(weapon, killerInVehicle)
+	local reason
 
 	-- Check what type of weapon the player was killed by
 	-- Pistol
@@ -291,6 +364,9 @@ AddEventHandler("deathmessages:notifyMurder", function(victimID, killerID, weapo
 	-- Light machine gun
 	elseif TableHasValue(weaponsLMGs, weapon) then
 		reason = reasonBullets[math.random(#reasonBullets)]
+	-- Molotov
+	elseif weapon == `weapon_molotov` then
+		reason = reasonFire[math.random(#reasonFire)]
 	-- Helicopter blades
 	elseif weapon == `vehicle_weapon_rotors` then
 		reason = reasonHelicopter[math.random(#reasonHelicopter)]
@@ -301,62 +377,5 @@ AddEventHandler("deathmessages:notifyMurder", function(victimID, killerID, weapo
 		reason = "killed"
 	end
 
-	-- Create the kill message
-	if isKillerNPC then
-		if not victimString == "you" and killerType == 6 or killerType == 27 then
-			notify(victimString .. " was killed by cops.")
-		else
-			notify(victimString .. " died.")
-		end
-	else
-		notify(killerString .. " " .. reason .. " " .. victimString .. ".")
-	end
-end)
-
--- If the player is killed
-
---[[
-	killerID is the player ID of the killer. Returns -1 if killed by an NPC.
-]]
-AddEventHandler("baseevents:onPlayerKilled", function(killerID, deathData)
-	-- Killed by a cop
-	if deathData.killertype == 6 or deathData.killertype == 27  then
-	elseif deathData.killerinveh then
-	end
-	TriggerServerEvent("deathmessages:broadcastMurder", GetPlayerServerId(player), killerID, deathData.weaponhash, deathData.killerinveh, deathData.killertype)
-end)
-
--- If the player dies
-AddEventHandler("baseevents:onPlayerDied", function()
-	TriggerServerEvent("deathmessages:broadcastDeath", GetPlayerServerId(player))
-end)
-
-function notify(text)
-	SetNotificationTextEntry("STRING")
-	-- Automatically capitalize the first letter
-    AddTextComponentString(text:gsub("^%l", string.upper))
-    DrawNotification(true, true)
-end
-
-function printPlayerName(playerID)
-	local playerString = "<C>" .. GetPlayerName(playerID) .. "</C>"
-	return playerString
-end
-
--- Merge 2 tables
-function TableConcat(t1,t2)
-    for i=1,#t2 do
-        t1[#t1+1] = t2[i]
-    end
-    return t1
-end
-
--- Check if a table contains a specific value
-function TableHasValue (table, value)
-    for i=1,#table do
-        if table[i] == value then
-            return true
-        end
-    end
-    return false
+	return reason
 end
