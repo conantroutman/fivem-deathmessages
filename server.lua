@@ -1,9 +1,9 @@
 RegisterServerEvent("deathmessages:broadcastDeath")
 RegisterServerEvent("deathmessages:broadcastMurder")
 
-AddEventHandler("deathmessages:broadcastDeath", function(victimName)
-	print(victimName .. " died")
-	TriggerClientEvent("deathmessages:notifyDeath",-1, victimName)
+AddEventHandler("deathmessages:broadcastDeath", function(victimIndex, killer)
+	--print(victimName .. " died")
+	TriggerClientEvent("deathmessages:notifyDeath",-1, victimIndex, killer)
 end)
 
 AddEventHandler("deathmessages:broadcastMurder", function(victimIndex, killerIndex, string, killerInVehicle, killerType)

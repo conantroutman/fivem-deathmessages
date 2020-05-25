@@ -1,42 +1,36 @@
 player = PlayerId()
 networkIndex = NetworkGetPlayerIndexFromPed(GetPlayerPed(-1))
 
-reasonBullets = {
-	"killed",
-	"shot",
-	"2nd amendmented",
-	"decomissioned",
-	"3rd worlded",
-	"annihilated",
-	"ended",
-	"deaded",
-	"smoked",
-	"capped",
-	"clipped",
-	"clocked",
-	"whacked",
-	"crossed out",
-	"punctuated",
-	"popped",
-	"machined",
-	"armied",
-	"manslaughtered",
-	"terminated"
-}
-
 reasonSniper = {
-	"lightning bolted",
-	"brought down",
-	"high-calibered",
+	"sniped",
+	"picked off",
+	"scoped",
 	"assassinated",
-	"sniped"
+	"brought down",
+	"caught out",
+	"high-calibered",
+	"lightning bolted",
+	"nailed",
+	"picked off",
+	"struck down",
+	"surprised"
 }
 
 reasonRifle = {
 	"ended",
 	"rifled",
 	"shot down",
-	"floored"
+	"floored",
+	"3rd worlded",
+	"annihilated",
+	"armied",
+	"decommissioned",
+	"drilled",
+	"ended",
+	"killed",
+	"machined",
+	"punctuated",
+	"terminated"
 }
 
 reasonSMG = {
@@ -44,7 +38,16 @@ reasonSMG = {
 	"drilled",
 	"submachine gunned",
 	"ruined",
-	"SMGed"
+	"SMGed",
+	"cancelled",
+	"crossed out",
+	"cut down",
+	"massacered",
+	"peppered",
+	"plugged",
+	"riddled",
+	"sprayed",
+	"ventilated"
 }
 
 reasonLMG = {
@@ -54,13 +57,32 @@ reasonLMG = {
 
 reasonShotgun = {
 	"pulverised",
-	"shotgunned"
+	"shotgunned",
+	"12 bored",
+	"blew away",
+	"double barreled",
+	"farmed",
+	"opened up",
+	"perforated",
+	"pumped",
+	"put a load in",
+	"shelled",
+	"shottied"
 }
 
 reasonPistol = {
 	"pistoled",
 	"blasted",
-	"plugged"
+	"plugged",
+	"2nd amendmented",
+	"capped",
+	"clipped",
+	"clocked",
+	"deaded",
+	"popped",
+	"shot",
+	"smoked",
+	"whacked"
 }
 
 reasonMinigun = {
@@ -92,19 +114,19 @@ reasonKnife = {
 	"knifed",
 	"eviscerated",
 	"diced",
-	"filleted"
+	"filleted",
+	"cut up",
+	"slashed",
+	"stabbed"
 }
 
 reasonExplosives = {
 	"vaporized",
 	"fucked up",
 	"totaled",
-	"shock-and-awed",
+	"shock & awed",
 	"blew up",
-	"blitzed",
-	"blatzed",
-	"bombed",
-	"detonated"
+	"blitzed"
 }
 
 reasonFire = {
@@ -120,18 +142,43 @@ reasonFire = {
 	"torched"
 }
 
+reasonRPG = {
+	"exploded",
+	"obliterated",
+	"destroyed",
+	"erased"
+}
+
+reasonGrenade = {
+	"bombed",
+	"detonated"
+}
+
 reasonVehicle = {
 	"steamrolled",
 	"flattened",
 	"plowed",
 	"accidented",
 	"splattered",
-	"ran over"
+	"ran over",
+	"gouranga'd",
+	"hut and runned",
+	"manslaughtered",
+	"shocked"
 }
 
 reasonHelicopter = {
 	"mowed down",
-	"chopped up"
+	"chopped up",
+	"fucked up",
+	"pulverized",
+	"shocked & awed",
+	"totaled",
+	"vaporized"
+}
+
+reasonSuicide = {
+	"commited suicide"
 }
 
 weaponsPistols = {
@@ -222,11 +269,19 @@ weaponsKnives = {
 	`weapon_nightstick`,
 }
 
-weaponsExplosives = {
+weaponsGrenades = {
 	`weapon_grenade`,
 	`weapon_stickybomb`,
 	`weapon_proxmine`,
 	`weapon_pipebomb`
+}
+
+weaponsLaunchers = {
+	`weapon_rpg`,
+	`weapon_grenadelauncher`,
+	`weapon_railgun`,
+	`weapon_hominglauncher`,
+	`weapon_compactlauncher`
 }
 
 weaponsFire = {
@@ -237,16 +292,18 @@ weaponsFire = {
 
 RegisterNetEvent("deathmessages:notifyDeath")
 RegisterNetEvent("deathmessages:notifyMurder")
-AddEventHandler("deathmessages:notifyDeath", function(victimName)
+AddEventHandler("deathmessages:notifyDeath", function(victimIndex, killer)
 	-- Check if you are the victim
 	local victimString
-	if victimName == GetPlayerName(player) then
+	local string = GenerateDeathReason(victimIndex, killer)
+	if victimIndex == networkIndex then
 		victimString = "you"
 	else
-		victimString = printPlayerName(victimName)
+		victimString = printPlayerName(victimIndex)
 	end
 
-	notify(victimString .. " died.")
+	--TriggerEvent("notifications:Notify", (victimString .. string))
+	TriggerEvent("notifications:Notify", victimString .. string)
 end)
 
 AddEventHandler("deathmessages:notifyMurder", function(victimIndex, killerIndex, string, killerInVehicle, killerType)
@@ -259,31 +316,14 @@ AddEventHandler("deathmessages:notifyMurder", function(victimIndex, killerIndex,
 		victimString = printPlayerName(victimIndex)
 	end
 
-	-- Check if the killer is an NPC or a player
-	--if killerID == -1 then
-	--	isKillerNPC = true
-	--else
-		--isKillerNPC = false
 	killerString = printPlayerName(killerIndex)
-	--end
 
 	-- Check if you are the killer
 	if killerIndex == networkIndex then
 		killerString = "you"
 	end
 
-	-- Create the kill message
-	--if isKillerNPC then
-	--	if not victimString == "you" and killerType == 6 or killerType == 27 then
-	--		notify(victimString .. " was killed by cops.")
-	--	elseif killerType == 28 then
-	--		notify(victimString .. " was mauled to death by an animal.")
-	--	else
-	--		notify(victimString .. " died.")
-	--	end
-	--else
-	notify(killerString .. " " .. string .. " " .. victimString .. ".")
-	--end
+	TriggerEvent("notifications:Notify", killerString .. " " .. string .. " " .. victimString .. ".")
 end)
 
 -- If the player is killed
@@ -306,7 +346,10 @@ end)
 
 -- If the player dies
 AddEventHandler("baseevents:onPlayerDied", function()
-	TriggerServerEvent("deathmessages:broadcastDeath", GetPlayerName(player))
+	local killerEntity, weapon = NetworkGetEntityKillerOfPlayer(player)
+	print(IsEntityAPed(GetPedSourceOfDeath(GetPlayerPed(-1))))
+	local killer = GetPedSourceOfDeath(GetPlayerPed(-1))
+	TriggerServerEvent("deathmessages:broadcastDeath", networkIndex, GetPedType(killer))
 end)
 
 function notify(text)
@@ -339,33 +382,39 @@ function TableHasValue (table, value)
     return false
 end
 
+-- Check what type of weapon the player was killed by
 function GenerateKillReason(weapon, killerInVehicle)
 	local reason
 
-	-- Check what type of weapon the player was killed by
 	-- Pistol
 	if TableHasValue(weaponsPistols, weapon) then
-		reasons = TableConcat(reasonPistol, reasonBullets)
-		reason = reasons[math.random(#reasons)]
+		--reasons = TableConcat(reasonPistol, reasonBullets)
+		reason = reasonPistol[math.random(#reasonPistol)]
 	-- Shotgun
 	elseif TableHasValue(weaponsShotguns, weapon) then
-		reasons = TableConcat(reasonShotgun, reasonBullets)
-		reason = reasons[math.random(#reasons)]
+		--reasons = TableConcat(reasonShotgun, reasonBullets)
+		reason = reasonShotgun[math.random(#reasonShotgun)]
 	-- Assault rifle
 	elseif TableHasValue(weaponsRifles, weapon) then
-		reasons = TableConcat(reasonRifle, reasonBullets)
-		reason = reasons[math.random(#reasons)]
+		--reasons = TableConcat(reasonRifle, reasonBullets)
+		reason = reasonRifle[math.random(#reasonRifle)]
 	-- Sniper rifle
 	elseif TableHasValue(weaponsSnipers, weapon) then
-		reasons = TableConcat(reasonSniper, reasonBullets)
-		reason = reasons[math.random(#reasons)]
+		--reasons = TableConcat(reasonSniper, reasonBullets)
+		reason = reasonSniper[math.random(#reasonSniper)]
 	-- Sub machine gun
 	elseif TableHasValue(weaponsSMGs, weapon) then
-		reasons = TableConcat(reasonSMG, reasonBullets)
-		reason = reasons[math.random(#reasons)]
+		--reasons = TableConcat(reasonSMG, reasonBullets)
+		reason = reasonSMG[math.random(#reasonSMG)]
 	-- Light machine gun
 	elseif TableHasValue(weaponsLMGs, weapon) then
-		reason = reasonBullets[math.random(#reasonBullets)]
+		reason = reasonLMG[math.random(#reasonLMG)]
+	elseif TableHasValue(weaponsGrenades, weapon) then
+		reasons = TableConcat(reasonGrenade, reasonExplosives)
+		reason = reasons[math.random(#reasons)]
+	elseif TableHasValue(weaponsLaunchers, weapon) then
+		reasons = TableConcat(reasonRPG, reasonExplosives)
+		reason = reasons[math.random(#reasons)]
 	-- Molotov
 	elseif weapon == `weapon_molotov` then
 		reason = reasonFire[math.random(#reasonFire)]
@@ -380,4 +429,27 @@ function GenerateKillReason(weapon, killerInVehicle)
 	end
 
 	return reason
+end
+
+function GenerateDeathReason(victimIndex, killer)
+	local string
+	if IsEntityInWater(GetPlayerPed(victimIndex)) then
+		string = " drowned."
+	elseif killer == 6 or killer == 27 then
+		if GetPlayerPed(victimIndex) == GetPlayerPed(-1) then
+			string = " were brought to justice."
+		else
+			string = " was brought to justice."
+		end
+	elseif killer == 28 then
+		if IsPedModel(killer, GetHashKey("a_c_mtlion")) then
+			string = " was mauled by a mountain lion."
+		elseif IsPedModel(killer, GetHashKey("a_c_sharkhammer")) or IsPedModel(killer, GetHashKey("a_c_sharktiger")) then
+			string = " eaten by a shark."
+		end
+	else
+		string = " died."
+	end
+
+	return string
 end
